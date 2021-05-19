@@ -21,6 +21,12 @@ type TransparentCache struct {
 	prices             *sync.Map
 }
 
+// Price is a struct represent the price value and its expiration time
+type Price struct {
+	priceValue float64
+	expiration time.Time
+}
+
 func NewTransparentCache(actualPriceService PriceService, maxAge time.Duration) *TransparentCache {
 	return &TransparentCache{
 		actualPriceService: actualPriceService,
@@ -31,17 +37,21 @@ func NewTransparentCache(actualPriceService PriceService, maxAge time.Duration) 
 
 // GetPriceFor gets the price for the item, either from the cache or the actual service if it was not cached or too old
 func (c *TransparentCache) GetPriceFor(itemCode string) (float64, error) {
-	priceI, ok := c.prices.Load(itemCode)
+	priceLoaded, ok := c.prices.Load(itemCode)
 	if ok {
 		// TODO: check that the price was retrieved less than "maxAge" ago!
-		return priceI.(float64), nil
+		price := priceLoaded.(Price)
+		if price.expiration.After(time.Now()) {
+			return price.priceValue, nil
+		}
 	}
-	price, err := c.actualPriceService.GetPriceFor(itemCode)
+	priceValue, err := c.actualPriceService.GetPriceFor(itemCode)
 	if err != nil {
 		return 0, fmt.Errorf("getting price from service : %v", err.Error())
 	}
-	c.prices.Store(itemCode, price)
-	return price, nil
+
+	c.prices.Store(itemCode, Price{priceValue: priceValue, expiration: time.Now().Add(c.maxAge)})
+	return priceValue, nil
 }
 
 // GetPricesFor gets the prices for several items at once, some might be found in the cache, others might not

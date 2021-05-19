@@ -1,7 +1,7 @@
 # Golang-Challenge
 Deviget Golang-Challenge
 
-[![Build Status](https://github.com/famartinez80/Golang-Challenge/actions/workflows/go.yml/badge.svg?branch=master)
+![Build Status](https://github.com/famartinez80/Golang-Challenge/actions/workflows/go.yml/badge.svg?branch=master)
 
 ## New features
 

@@ -39,7 +39,6 @@ func NewTransparentCache(actualPriceService PriceService, maxAge time.Duration) 
 func (c *TransparentCache) GetPriceFor(itemCode string) (float64, error) {
 	priceLoaded, ok := c.prices.Load(itemCode)
 	if ok {
-		// TODO: check that the price was retrieved less than "maxAge" ago!
 		price := priceLoaded.(Price)
 		if price.expiration.After(time.Now()) {
 			return price.priceValue, nil
@@ -59,7 +58,7 @@ func (c *TransparentCache) GetPriceFor(itemCode string) (float64, error) {
 func (c *TransparentCache) GetPricesFor(itemCodes ...string) ([]float64, error) {
 	var results []float64
 	var wg sync.WaitGroup
-	queue := make(chan float64)
+	queue := make(chan float64, 10)
 
 	for _, itemCode := range itemCodes {
 		wg.Add(1)

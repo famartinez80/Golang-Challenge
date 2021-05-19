@@ -49,17 +49,23 @@ func (c *TransparentCache) GetPriceFor(itemCode string) (float64, error) {
 func (c *TransparentCache) GetPricesFor(itemCodes ...string) ([]float64, error) {
 	var results []float64
 	var wg sync.WaitGroup
+	var err error
 
 	for _, itemCode := range itemCodes {
 		wg.Add(1)
 		go func(itemCode string) {
 			defer wg.Done()
-			price, err := c.GetPriceFor(itemCode)
-			if err != nil {
-				fmt.Println(err)
+			price, errI := c.GetPriceFor(itemCode)
+			if errI != nil {
+				err = errI
+				return
 			}
 			results = append(results, price)
 		}(itemCode)
+
+		if err != nil{
+			return []float64{}, err
+		}
 	}
 	wg.Wait()
 	return results, nil
